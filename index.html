@@ -25,7 +25,7 @@
   h1,h2,h3,h4{font-family:var(--serif);font-weight:400;margin:0;}
   nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:18px var(--gut);transition:background .4s,border-color .4s,padding .4s;border-bottom:1px solid transparent;}
   nav.scrolled{background:rgba(10,18,14,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding-top:14px;padding-bottom:14px;}
-  .brand{font-family:var(--serif);font-size:21px;letter-spacing:.01em;display:inline-flex;align-items:center;gap:12px;}
+  .brand{font-family:var(--serif);font-size:21px;letter-spacing:.01em;display:inline-flex;align-items:center;gap:12px;position:relative;z-index:60;}
   .logo-badge{width:40px;height:40px;border-radius:50%;background:var(--ivory);display:inline-flex;align-items:flex-end;justify-content:center;overflow:hidden;flex:none;border:1px solid var(--line);box-shadow:0 0 0 4px rgba(198,161,91,.06);}
   .logo-badge img{width:80%;height:auto;display:block;transform:translateY(3px);}
   .logo-badge.sm{width:30px;height:30px;box-shadow:none;}
@@ -34,6 +34,11 @@
   .nav-links a.navlink:hover,.nav-links a.navlink.active{color:var(--ivory);}
   .nav-cta{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;padding:9px 18px;border:1px solid var(--brass);border-radius:100px;color:var(--brass);transition:background .25s,color .25s;cursor:pointer;}
   .nav-cta:hover{background:var(--brass);color:var(--ink);}
+  .menu-btn{display:none;flex-direction:column;justify-content:center;gap:5px;width:44px;height:44px;border:1px solid var(--line);border-radius:9px;background:transparent;cursor:pointer;padding:0 11px;position:relative;z-index:60;}
+  .menu-btn span{display:block;height:2px;width:100%;background:var(--ivory);transition:transform .25s,opacity .25s;}
+  nav.open .menu-btn span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  nav.open .menu-btn span:nth-child(2){opacity:0;}
+  nav.open .menu-btn span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
   header.hero{min-height:100svh;display:flex;align-items:center;padding:150px 0 90px;}
   .hero-inner{max-width:960px;}
   .hero h1{font-size:clamp(2.6rem,6.6vw,5.2rem);line-height:1.03;letter-spacing:-.02em;margin:26px 0 0;}
@@ -178,7 +183,7 @@
   .reveal{opacity:0;transform:translateY(22px);transition:opacity .8s,transform .8s;}
   .reveal.in{opacity:1;transform:none;}
   @media (max-width:900px){.stats{grid-template-columns:repeat(2,1fr);}.gallery{grid-template-columns:repeat(2,1fr);}.cards,.cards.three{grid-template-columns:1fr;}.services-grid{grid-template-columns:1fr;}.about-split{grid-template-columns:1fr;}}
-  @media (max-width:860px){.nav-links .navlink{display:none;}.project{grid-template-columns:1fr;}.plate{min-height:190px;}}
+  @media (max-width:860px){.menu-btn{display:flex;}.nav-links{display:none;position:fixed;inset:0;z-index:45;flex-direction:column;justify-content:center;align-items:flex-start;gap:2px;background:rgba(10,18,14,.98);backdrop-filter:blur(16px);padding:120px var(--gut) 48px;}nav.open .nav-links{display:flex;}.nav-links a.navlink{display:block;font-size:16px;letter-spacing:.14em;padding:16px 0;color:var(--ivory);}.nav-links a.navlink.active{color:var(--brass);}.nav-links .nav-cta{margin-top:26px;font-size:14px;padding:15px 28px;}header.hero{padding:120px 0 72px;}.project{grid-template-columns:1fr;}.plate{min-height:190px;}}
   @media (max-width:560px){.gallery{grid-template-columns:1fr;}}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto;}.reveal{opacity:1;transform:none;transition:none;}html{scroll-behavior:auto;}}
 </style>
@@ -203,6 +208,7 @@
     <a href="services.html" class="navlink">Services</a>
     <a class="nav-cta" data-open-contact>Work with me</a>
   </div>
+  <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
 </nav>
 
 <header class="hero" id="top">
@@ -296,7 +302,7 @@
 
 <script>
   var overlay=document.getElementById('contactModal'),openers=document.querySelectorAll('[data-open-contact]'),closeBtn=document.getElementById('modalClose'),firstField=document.getElementById('cf-name'),lastFocused=null;
-  function openModal(e){if(e)e.preventDefault();lastFocused=document.activeElement;overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');setTimeout(function(){firstField&&firstField.focus();},60);document.body.style.overflow='hidden';}
+  function openModal(e){if(e)e.preventDefault();lastFocused=document.activeElement;overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');setTimeout(function(){firstField&&firstField.focus();},60);document.body.style.overflow='hidden';var _n=document.getElementById('nav');if(_n)_n.classList.remove('open');var _mb=document.getElementById('menuBtn');if(_mb)_mb.setAttribute('aria-expanded','false');}
   function closeModal(){overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');document.body.style.overflow='';if(lastFocused)lastFocused.focus();}
   openers.forEach(function(el){el.addEventListener('click',openModal);});
   closeBtn.addEventListener('click',closeModal);
@@ -309,6 +315,10 @@
   var form=document.getElementById('contactForm'),status=document.getElementById('formStatus'),submitBtn=document.getElementById('modalSubmit');
   form.addEventListener('submit',async function(e){e.preventDefault();status.className='form-status';status.textContent='';submitBtn.disabled=true;submitBtn.textContent='Sending\u2026';var data=new URLSearchParams(new FormData(form)).toString();try{var res=await fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:data});if(!res.ok)throw new Error('bad');form.reset();status.className='form-status ok';status.textContent='Sent. I\u2019ll be in touch shortly \u2014 thank you.';submitBtn.textContent='Sent \u2713';}catch(err){status.className='form-status err';status.innerHTML='Something went wrong. Email me directly at <a href="mailto:hello@bosslammy.com">hello@bosslammy.com</a>.';submitBtn.disabled=false;submitBtn.textContent='Send';}});
   var nav=document.getElementById('nav');function onScroll(){nav.classList.toggle('scrolled',window.scrollY>40);}onScroll();window.addEventListener('scroll',onScroll,{passive:true});
+  var menuBtn=document.getElementById('menuBtn');
+  if(menuBtn){menuBtn.addEventListener('click',function(){var o=nav.classList.toggle('open');menuBtn.setAttribute('aria-expanded',o);document.body.style.overflow=o?'hidden':'';});
+  document.querySelectorAll('.nav-links a:not(.nav-cta)').forEach(function(a){a.addEventListener('click',function(){nav.classList.remove('open');menuBtn.setAttribute('aria-expanded','false');document.body.style.overflow='';});});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&nav.classList.contains('open')){nav.classList.remove('open');menuBtn.setAttribute('aria-expanded','false');document.body.style.overflow='';}});}
   document.getElementById('year').textContent=new Date().getFullYear();
   var prefersReduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches,items=document.querySelectorAll('.reveal');
   if(prefersReduced||!('IntersectionObserver'in window)){items.forEach(function(el){el.classList.add('in');});}
